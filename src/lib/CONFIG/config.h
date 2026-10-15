@@ -15,7 +15,7 @@
 #define TX_CONFIG_MAGIC     (0b01U << 30)
 #define RX_CONFIG_MAGIC     (0b10U << 30)
 
-#define TX_CONFIG_VERSION   7U
+#define TX_CONFIG_VERSION   9U
 #define RX_CONFIG_VERSION   9U
 
 #if defined(TARGET_TX)
@@ -98,6 +98,8 @@ typedef struct {
     tx_button_color_t buttonColors[2];  // FUTURE: TX RGB color / mode (sets color of TX, can be a static color or standard)
                                         // FUTURE: Model RGB color / mode (sets LED color mode on the model, but can be second TX led color too)
                                         // FUTURE: Custom button actions
+    uint8_t         vtxChanAux; // 0=disabled, else AUX1-AUX8 selects VTX channel
+    uint8_t         vtxPowerAux; // 0=disabled, else AUX1-AUX8 selects VTX power
 } tx_config_t;
 
 class TxConfig
@@ -122,6 +124,8 @@ public:
     uint8_t  GetVtxChannel() const { return m_config.vtxChannel; }
     uint8_t  GetVtxPower() const { return m_config.vtxPower; }
     uint8_t  GetVtxPitmode() const { return m_config.vtxPitmode; }
+    uint8_t  GetVtxChanAux() const { return m_config.vtxChanAux; }
+    uint8_t  GetVtxPowerAux() const { return m_config.vtxPowerAux; }
     uint8_t GetPowerFanThreshold() const { return m_config.powerFanThreshold; }
     uint8_t  GetFanMode() const { return m_config.fanMode; }
     uint8_t  GetMotionMode() const { return m_config.motionMode; }
@@ -151,6 +155,8 @@ public:
     void SetVtxChannel(uint8_t vtxChannel);
     void SetVtxPower(uint8_t vtxPower);
     void SetVtxPitmode(uint8_t vtxPitmode);
+    void SetVtxChanAux(uint8_t vtxChanAux);
+    void SetVtxPowerAux(uint8_t vtxPowerAux);
     void SetPowerFanThreshold(uint8_t powerFanThreshold);
     void SetFanMode(uint8_t fanMode);
     void SetMotionMode(uint8_t motionMode);
@@ -170,6 +176,8 @@ private:
 #if !defined(PLATFORM_ESP32)
     void UpgradeEepromV5ToV6();
     void UpgradeEepromV6ToV7();
+    void UpgradeEepromV7ToV8();
+    void UpgradeEepromV8ToV9();
 #endif
 
     tx_config_t m_config;

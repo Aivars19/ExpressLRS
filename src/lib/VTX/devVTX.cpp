@@ -24,6 +24,10 @@
 
 extern Stream *TxBackpack;
 static int pitmodeAuxState = PITMODE_NOT_INITIALISED;
+static int vtxChannelAuxState = PITMODE_NOT_INITIALISED;
+static bool vtxChannelAuxActive = false;
+static int vtxPowerAuxState = PITMODE_NOT_INITIALISED;
+static bool vtxPowerAuxActive = false;
 static bool sendEepromWrite = true;
 
 static enum VtxSendState_e
@@ -44,6 +48,90 @@ void VtxTriggerSend()
 
 void VtxPitmodeSwitchUpdate()
 {
+    uint8_t powerAux = config.GetVtxPowerAux();
+    if (powerAux > 8)
+        powerAux = 8;
+
+    if (powerAux == 0)
+    {
+        if (vtxPowerAuxActive)
+        {
+            vtxPowerAuxActive = false;
+            vtxPowerAuxState = PITMODE_NOT_INITIALISED;
+            VtxTriggerSend();
+            sendEepromWrite = false;
+        }
+    }
+    else
+    {
+        uint32_t powerValue = ChannelData[powerAux + 3];
+        if (powerValue < CRSF_CHANNEL_VALUE_MIN)
+            powerValue = CRSF_CHANNEL_VALUE_MIN;
+        if (powerValue > CRSF_CHANNEL_VALUE_MAX)
+            powerValue = CRSF_CHANNEL_VALUE_MAX;
+        uint8_t newVtxPower = 1 + ((powerValue - CRSF_CHANNEL_VALUE_MIN) * 8) /
+                              (CRSF_CHANNEL_VALUE_MAX - CRSF_CHANNEL_VALUE_MIN + 1);
+
+        if (!vtxPowerAuxActive)
+        {
+            vtxPowerAuxActive = true;
+            vtxPowerAuxState = newVtxPower;
+            if (newVtxPower != config.GetVtxPower())
+            {
+                VtxTriggerSend();
+                sendEepromWrite = false;
+            }
+        }
+        else if (vtxPowerAuxState != newVtxPower)
+        {
+            vtxPowerAuxState = newVtxPower;
+            VtxTriggerSend();
+            sendEepromWrite = false;
+        }
+    }
+
+    uint8_t channelAux = config.GetVtxChanAux();
+    if (channelAux > 8)
+        channelAux = 8;
+
+    if (channelAux == 0)
+    {
+        if (vtxChannelAuxActive)
+        {
+            vtxChannelAuxActive = false;
+            vtxChannelAuxState = PITMODE_NOT_INITIALISED;
+            VtxTriggerSend();
+            sendEepromWrite = false;
+        }
+    }
+    else
+    {
+        uint32_t channelValue = ChannelData[channelAux + 3];
+        if (channelValue < CRSF_CHANNEL_VALUE_MIN)
+            channelValue = CRSF_CHANNEL_VALUE_MIN;
+        if (channelValue > CRSF_CHANNEL_VALUE_MAX)
+            channelValue = CRSF_CHANNEL_VALUE_MAX;
+        uint8_t newVtxChannel = ((channelValue - CRSF_CHANNEL_VALUE_MIN) * 8) /
+                                (CRSF_CHANNEL_VALUE_MAX - CRSF_CHANNEL_VALUE_MIN + 1);
+
+        if (!vtxChannelAuxActive)
+        {
+            vtxChannelAuxActive = true;
+            vtxChannelAuxState = newVtxChannel;
+            if (newVtxChannel != config.GetVtxChannel())
+            {
+                VtxTriggerSend();
+                sendEepromWrite = false;
+            }
+        }
+        else if (vtxChannelAuxState != newVtxChannel)
+        {
+            vtxChannelAuxState = newVtxChannel;
+            VtxTriggerSend();
+            sendEepromWrite = false;
+        }
+    }
+
     if (config.GetVtxPitmode() <= PITMODE_ON)
     {
         pitmodeAuxState = config.GetVtxPitmode();
@@ -67,6 +155,16 @@ void VtxPitmodeSwitchUpdate()
     }
 }
 
+uint8_t VtxGetCurrentChannel()
+{
+    return vtxChannelAuxActive ? vtxChannelAuxState : config.GetVtxChannel();
+}
+
+uint8_t VtxGetCurrentPower()
+{
+    return vtxPowerAuxActive ? vtxPowerAuxState : config.GetVtxPower();
+}
+
 static void eepromWriteToMSPOut()
 {
     mspPacket_t packet;
@@ -79,7 +177,8 @@ static void eepromWriteToMSPOut()
 static void VtxConfigToMSPOut()
 {
     DBGLN("Sending VtxConfig");
-    uint8_t vtxIdx = (config.GetVtxBand()-1) * 8 + config.GetVtxChannel();
+    uint8_t vtxChannel = VtxGetCurrentChannel();
+    uint8_t vtxIdx = (config.GetVtxBand()-1) * 8 + vtxChannel;
 
     mspPacket_t packet;
     packet.reset();
@@ -87,9 +186,10 @@ static void VtxConfigToMSPOut()
     packet.function = MSP_SET_VTX_CONFIG;
     packet.addByte(vtxIdx);     // band/channel or frequency low byte
     packet.addByte(0);          // frequency high byte, if frequency mode
-    if (config.GetVtxPower())
+    uint8_t vtxPower = VtxGetCurrentPower();
+    if (vtxPower)
     {
-        packet.addByte(config.GetVtxPower());
+        packet.addByte(vtxPower);
         packet.addByte(pitmodeAuxState);
     }
 

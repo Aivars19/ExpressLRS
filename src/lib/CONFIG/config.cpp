@@ -143,6 +143,10 @@ void TxConfig::Load()
         m_config.vtxPower = value >> 8;
         m_config.vtxPitmode = value;
     }
+    if (nvs_get_u8(handle, "vtxchanaux", &value8) == ESP_OK)
+        m_config.vtxChanAux = value8;
+    if (nvs_get_u8(handle, "vtxpoweraux", &value8) == ESP_OK)
+        m_config.vtxPowerAux = value8;
 
     // fanthresh (v5)
     if (nvs_get_u8(handle, "fanthresh", &value8) == ESP_OK)
@@ -244,6 +248,18 @@ void TxConfig::Load()
     if (version == 6)
     {
         UpgradeEepromV6ToV7();
+        version = 7;
+    }
+
+    if (version == 7)
+    {
+        UpgradeEepromV7ToV8();
+        version = 8;
+    }
+
+    if (version == 8)
+    {
+        UpgradeEepromV8ToV9();
     }
 }
 
@@ -296,6 +312,22 @@ void TxConfig::UpgradeEepromV6ToV7()
     m_config.version = 7U | TX_CONFIG_MAGIC;
     Commit();
 }
+
+void TxConfig::UpgradeEepromV7ToV8()
+{
+    m_config.vtxChanAux = 0;
+    m_config.version = 8U | TX_CONFIG_MAGIC;
+    m_modified = ALL_CHANGED;
+    Commit();
+}
+
+void TxConfig::UpgradeEepromV8ToV9()
+{
+    m_config.vtxPowerAux = 0;
+    m_config.version = 9U | TX_CONFIG_MAGIC;
+    m_modified = ALL_CHANGED;
+    Commit();
+}
 #endif
 
 void
@@ -323,6 +355,8 @@ TxConfig::Commit()
             m_config.vtxPower << 8 |
             m_config.vtxPitmode;
         nvs_set_u32(handle, "vtx", value);
+        nvs_set_u8(handle, "vtxchanaux", m_config.vtxChanAux);
+        nvs_set_u8(handle, "vtxpoweraux", m_config.vtxPowerAux);
     }
     if (m_modified & FAN_CHANGED)
     {
@@ -492,6 +526,32 @@ TxConfig::SetVtxPitmode(uint8_t vtxPitmode)
     if (m_config.vtxPitmode != vtxPitmode)
     {
         m_config.vtxPitmode = vtxPitmode;
+        m_modified |= VTX_CHANGED;
+    }
+}
+
+void
+TxConfig::SetVtxChanAux(uint8_t vtxChanAux)
+{
+    if (vtxChanAux > 8)
+        vtxChanAux = 8;
+
+    if (m_config.vtxChanAux != vtxChanAux)
+    {
+        m_config.vtxChanAux = vtxChanAux;
+        m_modified |= VTX_CHANGED;
+    }
+}
+
+void
+TxConfig::SetVtxPowerAux(uint8_t vtxPowerAux)
+{
+    if (vtxPowerAux > 8)
+        vtxPowerAux = 8;
+
+    if (m_config.vtxPowerAux != vtxPowerAux)
+    {
+        m_config.vtxPowerAux = vtxPowerAux;
         m_modified |= VTX_CHANGED;
     }
 }
