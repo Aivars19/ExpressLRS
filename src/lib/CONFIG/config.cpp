@@ -533,8 +533,8 @@ TxConfig::SetVtxPitmode(uint8_t vtxPitmode)
 void
 TxConfig::SetVtxChanAux(uint8_t vtxChanAux)
 {
-    if (vtxChanAux > 8)
-        vtxChanAux = 8;
+    if (vtxChanAux > 12)
+        vtxChanAux = 12;
 
     if (m_config.vtxChanAux != vtxChanAux)
     {
@@ -546,8 +546,8 @@ TxConfig::SetVtxChanAux(uint8_t vtxChanAux)
 void
 TxConfig::SetVtxPowerAux(uint8_t vtxPowerAux)
 {
-    if (vtxPowerAux > 8)
-        vtxPowerAux = 8;
+    if (vtxPowerAux > 12)
+        vtxPowerAux = 12;
 
     if (m_config.vtxPowerAux != vtxPowerAux)
     {

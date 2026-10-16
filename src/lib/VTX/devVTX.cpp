@@ -49,8 +49,8 @@ void VtxTriggerSend()
 void VtxPitmodeSwitchUpdate()
 {
     uint8_t powerAux = config.GetVtxPowerAux();
-    if (powerAux > 8)
-        powerAux = 8;
+    if (powerAux > 12)
+        powerAux = 12;
 
     if (powerAux == 0)
     {
@@ -91,8 +91,8 @@ void VtxPitmodeSwitchUpdate()
     }
 
     uint8_t channelAux = config.GetVtxChanAux();
-    if (channelAux > 8)
-        channelAux = 8;
+    if (channelAux > 12)
+        channelAux = 12;
 
     if (channelAux == 0)
     {

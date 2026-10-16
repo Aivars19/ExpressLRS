@@ -235,14 +235,14 @@ static struct luaItem_selection luaVtxPit = {
 static struct luaItem_selection luaVtxChanAux = {
     {"NIKNAIS CH", CRSF_TEXT_SELECTION},
     0, // value
-    "Off;AUX1;AUX2;AUX3;AUX4;AUX5;AUX6;AUX7;AUX8",
+    "Off;AUX1;AUX2;AUX3;AUX4;AUX5;AUX6;AUX7;AUX8;AUX9;AUX10;AUX11;AUX12",
     STR_EMPTYSPACE
 };
 
 static struct luaItem_selection luaVtxPowerAux = {
   {"NIKNAIS PWR", CRSF_TEXT_SELECTION},
   0, // value
-  "Off;AUX1;AUX2;AUX3;AUX4;AUX5;AUX6;AUX7;AUX8",
+  "Off;AUX1;AUX2;AUX3;AUX4;AUX5;AUX6;AUX7;AUX8;AUX9;AUX10;AUX11;AUX12",
   STR_EMPTYSPACE
 };
 

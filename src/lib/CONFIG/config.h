@@ -98,8 +98,8 @@ typedef struct {
     tx_button_color_t buttonColors[2];  // FUTURE: TX RGB color / mode (sets color of TX, can be a static color or standard)
                                         // FUTURE: Model RGB color / mode (sets LED color mode on the model, but can be second TX led color too)
                                         // FUTURE: Custom button actions
-    uint8_t         vtxChanAux; // 0=disabled, else AUX1-AUX8 selects VTX channel
-    uint8_t         vtxPowerAux; // 0=disabled, else AUX1-AUX8 selects VTX power
+    uint8_t         vtxChanAux; // 0=disabled, else AUX1-AUX12 selects VTX channel
+    uint8_t         vtxPowerAux; // 0=disabled, else AUX1-AUX12 selects VTX power
 } tx_config_t;
 
 class TxConfig
