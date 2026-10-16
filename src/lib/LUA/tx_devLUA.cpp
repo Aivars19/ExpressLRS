@@ -238,6 +238,12 @@ static struct luaItem_selection luaVtxChanAux = {
     "Off;AUX1;AUX2;AUX3;AUX4;AUX5;AUX6;AUX7;AUX8;AUX9;AUX10;AUX11;AUX12",
     STR_EMPTYSPACE
 };
+static struct luaItem_selection luaVtxDualBand = {
+    {"DualBand", CRSF_TEXT_SELECTION},
+    0, // value
+    "Off;L8R8",
+    STR_EMPTYSPACE
+};
 
 static struct luaItem_selection luaVtxPowerAux = {
   {"NIKNAIS PWR", CRSF_TEXT_SELECTION},
@@ -323,6 +329,7 @@ static int event();
 extern TxConfig config;
 extern void VtxTriggerSend();
 extern uint8_t VtxGetCurrentChannel();
+extern uint8_t VtxGetCurrentBand();
 extern uint8_t VtxGetCurrentPower();
 extern void ResetPower();
 extern uint8_t adjustPacketRateForBaud(uint8_t rate);
@@ -528,7 +535,7 @@ static void updateFolderName_TxPower()
 
 static void updateFolderName_VtxAdmin()
 {
-  uint8_t vtxBand = config.GetVtxBand();
+  uint8_t vtxBand = VtxGetCurrentBand();
   if (vtxBand)
   {
     luaVtxFolder.dyn_name = vtxFolderDynamicName;
@@ -803,6 +810,9 @@ static void registerLuaParameters()
     registerLUAParameter(&luaVtxChanAux, [](struct luaPropertiesCommon *item, uint8_t arg) {
       config.SetVtxChanAux(arg);
     }, luaVtxFolder.common.id);
+    registerLUAParameter(&luaVtxDualBand, [](struct luaPropertiesCommon *item, uint8_t arg) {
+      config.SetVtxDualBand(arg);
+    }, luaVtxFolder.common.id);
     registerLUAParameter(&luaVtxPowerAux, [](struct luaPropertiesCommon *item, uint8_t arg) {
       config.SetVtxPowerAux(arg);
     }, luaVtxFolder.common.id);
@@ -938,14 +948,16 @@ static int event()
   uint8_t dynamic = config.GetDynamicPower() ? config.GetBoostChannel() + 1 : 0;
   setLuaTextSelectionValue(&luaDynamicPower, dynamic);
 
-  setLuaTextSelectionValue(&luaVtxBand, config.GetVtxBand());
+  setLuaTextSelectionValue(&luaVtxBand, VtxGetCurrentBand());
   setLuaUint8Value(&luaVtxChannel, VtxGetCurrentChannel() + 1);
   setLuaTextSelectionValue(&luaVtxPwr, VtxGetCurrentPower());
   // Pit mode can only be sent as part of the power byte
   LUA_FIELD_VISIBLE(luaVtxPit, config.GetVtxPower() != 0 || config.GetVtxPowerAux() != 0);
   setLuaTextSelectionValue(&luaVtxPit, config.GetVtxPitmode());
   setLuaTextSelectionValue(&luaVtxChanAux, config.GetVtxChanAux());
+  setLuaTextSelectionValue(&luaVtxDualBand, config.GetVtxDualBand());
   setLuaTextSelectionValue(&luaVtxPowerAux, config.GetVtxPowerAux());
+  LUA_FIELD_VISIBLE(luaVtxBand, !(config.GetVtxDualBand() && config.GetVtxChanAux() != 0));
   if (OPT_USE_TX_BACKPACK)
   {
 #if defined(GPIO_PIN_BACKPACK_EN)

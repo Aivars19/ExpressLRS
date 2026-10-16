@@ -15,7 +15,7 @@
 #define TX_CONFIG_MAGIC     (0b01U << 30)
 #define RX_CONFIG_MAGIC     (0b10U << 30)
 
-#define TX_CONFIG_VERSION   9U
+#define TX_CONFIG_VERSION   10U
 #define RX_CONFIG_VERSION   9U
 
 #if defined(TARGET_TX)
@@ -100,6 +100,7 @@ typedef struct {
                                         // FUTURE: Custom button actions
     uint8_t         vtxChanAux; // 0=disabled, else AUX1-AUX12 selects VTX channel
     uint8_t         vtxPowerAux; // 0=disabled, else AUX1-AUX12 selects VTX power
+    uint8_t         vtxDualBand; // 0=single band, 1=AUX selects L1-L8 then R1-R8
 } tx_config_t;
 
 class TxConfig
@@ -126,6 +127,7 @@ public:
     uint8_t  GetVtxPitmode() const { return m_config.vtxPitmode; }
     uint8_t  GetVtxChanAux() const { return m_config.vtxChanAux; }
     uint8_t  GetVtxPowerAux() const { return m_config.vtxPowerAux; }
+    uint8_t  GetVtxDualBand() const { return m_config.vtxDualBand; }
     uint8_t GetPowerFanThreshold() const { return m_config.powerFanThreshold; }
     uint8_t  GetFanMode() const { return m_config.fanMode; }
     uint8_t  GetMotionMode() const { return m_config.motionMode; }
@@ -157,6 +159,7 @@ public:
     void SetVtxPitmode(uint8_t vtxPitmode);
     void SetVtxChanAux(uint8_t vtxChanAux);
     void SetVtxPowerAux(uint8_t vtxPowerAux);
+    void SetVtxDualBand(uint8_t vtxDualBand);
     void SetPowerFanThreshold(uint8_t powerFanThreshold);
     void SetFanMode(uint8_t fanMode);
     void SetMotionMode(uint8_t motionMode);
@@ -178,6 +181,7 @@ private:
     void UpgradeEepromV6ToV7();
     void UpgradeEepromV7ToV8();
     void UpgradeEepromV8ToV9();
+    void UpgradeEepromV9ToV10();
 #endif
 
     tx_config_t m_config;

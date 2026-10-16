@@ -147,6 +147,8 @@ void TxConfig::Load()
         m_config.vtxChanAux = value8;
     if (nvs_get_u8(handle, "vtxpoweraux", &value8) == ESP_OK)
         m_config.vtxPowerAux = value8;
+    if (nvs_get_u8(handle, "vtxdualband", &value8) == ESP_OK)
+        m_config.vtxDualBand = value8;
 
     // fanthresh (v5)
     if (nvs_get_u8(handle, "fanthresh", &value8) == ESP_OK)
@@ -236,6 +238,12 @@ void TxConfig::Load()
         return;
     }
 
+    if (version == 9)
+    {
+        UpgradeEepromV9ToV10();
+        return;
+    }
+
     // Upgrade EEPROM, starting with defaults
     SetDefaults(false);
 
@@ -260,6 +268,12 @@ void TxConfig::Load()
     if (version == 8)
     {
         UpgradeEepromV8ToV9();
+        version = 9;
+    }
+
+    if (version == 9)
+    {
+        UpgradeEepromV9ToV10();
     }
 }
 
@@ -328,6 +342,14 @@ void TxConfig::UpgradeEepromV8ToV9()
     m_modified = ALL_CHANGED;
     Commit();
 }
+
+void TxConfig::UpgradeEepromV9ToV10()
+{
+    m_config.vtxDualBand = 0;
+    m_config.version = 10U | TX_CONFIG_MAGIC;
+    m_modified = ALL_CHANGED;
+    Commit();
+}
 #endif
 
 void
@@ -357,6 +379,7 @@ TxConfig::Commit()
         nvs_set_u32(handle, "vtx", value);
         nvs_set_u8(handle, "vtxchanaux", m_config.vtxChanAux);
         nvs_set_u8(handle, "vtxpoweraux", m_config.vtxPowerAux);
+        nvs_set_u8(handle, "vtxdualband", m_config.vtxDualBand);
     }
     if (m_modified & FAN_CHANGED)
     {
@@ -552,6 +575,18 @@ TxConfig::SetVtxPowerAux(uint8_t vtxPowerAux)
     if (m_config.vtxPowerAux != vtxPowerAux)
     {
         m_config.vtxPowerAux = vtxPowerAux;
+        m_modified |= VTX_CHANGED;
+    }
+}
+
+void
+TxConfig::SetVtxDualBand(uint8_t vtxDualBand)
+{
+    vtxDualBand = vtxDualBand ? 1 : 0;
+
+    if (m_config.vtxDualBand != vtxDualBand)
+    {
+        m_config.vtxDualBand = vtxDualBand;
         m_modified |= VTX_CHANGED;
     }
 }

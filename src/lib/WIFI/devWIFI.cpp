@@ -338,6 +338,7 @@ static void GetConfiguration(AsyncWebServerRequest *request)
     json["config"]["vtx-admin"]["channel"] = config.GetVtxChannel();
     json["config"]["vtx-admin"]["pitmode"] = config.GetVtxPitmode();
     json["config"]["vtx-admin"]["channel-aux"] = config.GetVtxChanAux();
+    json["config"]["vtx-admin"]["dual-band"] = config.GetVtxDualBand();
     json["config"]["vtx-admin"]["power-aux"] = config.GetVtxPowerAux();
     json["config"]["vtx-admin"]["power"] = config.GetVtxPower();
     json["config"]["backpack"]["dvr-start-delay"] = config.GetDvrStartDelay();
@@ -447,6 +448,7 @@ static void ImportConfiguration(AsyncWebServerRequest *request, JsonVariant &jso
     if (json["vtx-admin"].containsKey("channel")) config.SetVtxChannel(json["vtx-admin"]["channel"]);
     if (json["vtx-admin"].containsKey("pitmode")) config.SetVtxPitmode(json["vtx-admin"]["pitmode"]);
     if (json["vtx-admin"].containsKey("channel-aux")) config.SetVtxChanAux(json["vtx-admin"]["channel-aux"]);
+    if (json["vtx-admin"].containsKey("dual-band")) config.SetVtxDualBand(json["vtx-admin"]["dual-band"]);
     if (json["vtx-admin"].containsKey("power-aux")) config.SetVtxPowerAux(json["vtx-admin"]["power-aux"]);
     if (json["vtx-admin"].containsKey("power")) config.SetVtxPower(json["vtx-admin"]["power"]);
   }

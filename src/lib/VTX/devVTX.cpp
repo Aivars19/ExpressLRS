@@ -1,6 +1,7 @@
 #include "targets.h"
 #include "common.h"
 #include "device.h"
+#include "devVTX.h"
 
 #include "config.h"
 #include "CRSF.h"
@@ -25,6 +26,7 @@
 extern Stream *TxBackpack;
 static int pitmodeAuxState = PITMODE_NOT_INITIALISED;
 static int vtxChannelAuxState = PITMODE_NOT_INITIALISED;
+static int vtxChannelAuxBandState = PITMODE_NOT_INITIALISED;
 static bool vtxChannelAuxActive = false;
 static int vtxPowerAuxState = PITMODE_NOT_INITIALISED;
 static bool vtxPowerAuxActive = false;
@@ -100,6 +102,7 @@ void VtxPitmodeSwitchUpdate()
         {
             vtxChannelAuxActive = false;
             vtxChannelAuxState = PITMODE_NOT_INITIALISED;
+            vtxChannelAuxBandState = PITMODE_NOT_INITIALISED;
             VtxTriggerSend();
             sendEepromWrite = false;
         }
@@ -111,24 +114,33 @@ void VtxPitmodeSwitchUpdate()
             channelValue = CRSF_CHANNEL_VALUE_MIN;
         if (channelValue > CRSF_CHANNEL_VALUE_MAX)
             channelValue = CRSF_CHANNEL_VALUE_MAX;
-        uint8_t newVtxChannel = ((channelValue - CRSF_CHANNEL_VALUE_MIN) * 8) /
+        uint8_t channelCount = config.GetVtxDualBand() ? 16 : 8;
+        uint8_t newVtxChannel = ((channelValue - CRSF_CHANNEL_VALUE_MIN) * channelCount) /
                                 (CRSF_CHANNEL_VALUE_MAX - CRSF_CHANNEL_VALUE_MIN + 1);
 
         if (!vtxChannelAuxActive)
         {
             vtxChannelAuxActive = true;
             vtxChannelAuxState = newVtxChannel;
-            if (newVtxChannel != config.GetVtxChannel())
+            vtxChannelAuxBandState = VtxGetCurrentBand();
+            if (VtxGetCurrentBand() != config.GetVtxBand() ||
+                VtxGetCurrentChannel() != config.GetVtxChannel())
             {
                 VtxTriggerSend();
                 sendEepromWrite = false;
             }
         }
-        else if (vtxChannelAuxState != newVtxChannel)
+        else
         {
+            bool channelChanged = vtxChannelAuxState != newVtxChannel;
             vtxChannelAuxState = newVtxChannel;
-            VtxTriggerSend();
-            sendEepromWrite = false;
+            uint8_t newVtxBand = VtxGetCurrentBand();
+            if (channelChanged || vtxChannelAuxBandState != newVtxBand)
+            {
+                vtxChannelAuxBandState = newVtxBand;
+                VtxTriggerSend();
+                sendEepromWrite = false;
+            }
         }
     }
 
@@ -157,7 +169,18 @@ void VtxPitmodeSwitchUpdate()
 
 uint8_t VtxGetCurrentChannel()
 {
-    return vtxChannelAuxActive ? vtxChannelAuxState : config.GetVtxChannel();
+    if (!vtxChannelAuxActive)
+        return config.GetVtxChannel();
+
+    return config.GetVtxDualBand() ? vtxChannelAuxState % 8 : vtxChannelAuxState;
+}
+
+uint8_t VtxGetCurrentBand()
+{
+    if (vtxChannelAuxActive && config.GetVtxDualBand())
+        return vtxChannelAuxState < 8 ? 6 : 5; // L1-L8, then R1-R8
+
+    return config.GetVtxBand();
 }
 
 uint8_t VtxGetCurrentPower()
@@ -178,7 +201,7 @@ static void VtxConfigToMSPOut()
 {
     DBGLN("Sending VtxConfig");
     uint8_t vtxChannel = VtxGetCurrentChannel();
-    uint8_t vtxIdx = (config.GetVtxBand()-1) * 8 + vtxChannel;
+    uint8_t vtxIdx = (VtxGetCurrentBand()-1) * 8 + vtxChannel;
 
     mspPacket_t packet;
     packet.reset();
@@ -209,7 +232,7 @@ static void initialize()
 static int event()
 {
     // 0 = VTX Admin disabled in the configuration
-    if (config.GetVtxBand() == 0)
+    if (VtxGetCurrentBand() == 0)
     {
         VtxSendState = VTXSS_CONFIRMED;
         return DURATION_NEVER;
